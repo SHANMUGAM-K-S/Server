@@ -56,25 +56,25 @@
 
 // app.listen(5000, () => console.log("Server running on port 5000"));
 // console.log("BUSINESS_EMAIL:", process.env.BUSINESS_EMAIL);
-// console.log("PERSONAL_EMAIL:", process.env.PERSONAL_EMAIL);import express from "express";
+// console.log("PERSONAL_EMAIL:", process.env.PERSONAL_EMAIL);
 
-
-///////////////////////////////////
-///////////////////////////////////
-///////////////////////////////////import cors from "cors";
+////////////////
+///////////////
+///////////////////
+import express from "express";
+import cors from "cors";
 import fs from "fs";
 import dotenv from "dotenv";
 import multer from "multer";
 import { fileURLToPath } from "url";
 import nodemailer from "nodemailer";
-import process from "process"; import cors from "cors";
+import process from "process";
 import path from "path";
-import express from "express";
 
 dotenv.config({ path: "./.env" });
 
 const app = express();
-app.use(cors()); // Allow all origins for now (change later if needed)
+app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -82,8 +82,8 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Define directories
-const JOBS_FILE = path.join(__dirname, "JsonFiles/Jobs.json"); // Ensure path works in Render
-const IMAGE_UPLOAD_DIR = path.join(__dirname, "Uploads"); // Ensure uploads work in Render
+const JOBS_FILE = path.join(__dirname, "../src/JsonFiles/Jobs.json");
+const IMAGE_UPLOAD_DIR = path.join(__dirname, "../src/Uploads");
 
 // Ensure upload directory exists
 if (!fs.existsSync(IMAGE_UPLOAD_DIR)) {
@@ -108,7 +108,6 @@ const readJobs = () => {
 const writeJobs = (jobs) => {
     try {
         fs.writeFileSync(JOBS_FILE, JSON.stringify(jobs, null, 2), "utf8");
-        console.log("✅ Jobs saved successfully!");
     } catch (err) {
         console.error("⚠️ Error writing job file:", err);
     }
@@ -126,47 +125,36 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
-// ✅ Get all jobs
+// Get all jobs
 app.get("/jobs", (req, res) => {
-    const jobs = readJobs();
-    console.log("✅ Fetched jobs:", jobs); // Debug log
-    res.json(jobs.length ? jobs : { message: "⚠️ No jobs available!" });
+    res.json(readJobs());
 });
 
-// ✅ Get job by ID
-app.get("/jobs/:id", (req, res) => {
-    const jobs = readJobs();
-    const job = jobs.find((j) => j.id === parseInt(req.params.id));
-    job ? res.json(job) : res.status(404).json({ message: "⚠️ Job not found!" });
-});
-
-// ✅ Add a new job with image upload
+// Add a new job with manual Job ID entry
 app.post("/jobs", upload.single("image"), (req, res) => {
     const jobs = readJobs();
-    if (!req.body.name || !req.body.experience || !req.body.location || !req.body.description) {
+    if (!req.body.id || !req.body.name || !req.body.experience || !req.body.location || !req.body.description) {
         return res.status(400).json({ message: "⚠️ Missing required fields" });
     }
 
     const newJob = {
-        id: jobs.length ? jobs[jobs.length - 1].id + 1 : 1,
+        id: req.body.id, // ✅ Now takes manually entered Job ID
         name: req.body.name,
         experience: req.body.experience,
         location: req.body.location,
-        description: req.body.description,
-        image: req.file ? `https://serverbackend-3kyd.onrender.com/uploads/${req.file.filename}` : null,
+        description: req.body.description, // ✅ Added Job Description field
+        image: req.file ? `http://localhost:5000/uploads/${req.file.filename}` : null,
     };
 
     jobs.push(newJob);
     writeJobs(jobs);
 
-    console.log("✅ Job added:", newJob); // Debug log
-
     res.json({ message: "✅ Job added successfully!", job: newJob });
 });
 
-// ✅ Update a job
+// Update a job (Job ID remains unchanged)
 app.put("/jobs/:id", upload.single("image"), (req, res) => {
-    const jobId = parseInt(req.params.id);
+    const jobId = req.params.id;
     let jobs = readJobs();
 
     const jobIndex = jobs.findIndex((job) => job.id === jobId);
@@ -174,31 +162,32 @@ app.put("/jobs/:id", upload.single("image"), (req, res) => {
 
     jobs[jobIndex] = {
         ...jobs[jobIndex],
-        ...req.body,
-        image: req.file ? `https://serverbackend-3kyd.onrender.com/uploads/${req.file.filename}` : jobs[jobIndex].image,
+        name: req.body.name || jobs[jobIndex].name,
+        experience: req.body.experience || jobs[jobIndex].experience,
+        location: req.body.location || jobs[jobIndex].location,
+        description: req.body.description || jobs[jobIndex].description, // ✅ Ensure job description updates correctly
+        image: req.file ? `http://localhost:5000/uploads/${req.file.filename}` : jobs[jobIndex].image,
     };
 
     writeJobs(jobs);
-    console.log("✅ Job updated:", jobs[jobIndex]); // Debug log
 
     res.json({ message: "✅ Job updated successfully!", job: jobs[jobIndex] });
 });
 
-// ✅ Delete a job
+// Delete a job
 app.delete("/jobs/:id", (req, res) => {
-    const jobId = parseInt(req.params.id);
+    const jobId = req.params.id;
     let jobs = readJobs();
 
     const updatedJobs = jobs.filter((job) => job.id !== jobId);
     if (jobs.length === updatedJobs.length) return res.status(404).json({ message: "⚠️ Job not found!" });
 
     writeJobs(updatedJobs);
-    console.log("✅ Job deleted:", jobId); // Debug log
 
     res.json({ message: "✅ Job removed successfully!" });
 });
 
-// ✅ Contact form email setup
+// Contact form email setup
 app.post("/send-email", upload.single("file"), async (req, res) => {
     try {
         const { name, email, phone, message, recipientEmail } = req.body;
@@ -219,7 +208,7 @@ app.post("/send-email", upload.single("file"), async (req, res) => {
             to: recipientEmail,
             subject: "New Application",
             text: `Name: ${name}\nEmail: ${email}\nMessage: ${message}\nPhone Number: ${phone}`,
-            attachments: file ? [{ filename: file.originalname, content: file.buffer, contentType: file.mimetype }] : [],
+            attachments: file ? [{ filename: file.originalname, content: file.buffer }] : [],
         };
 
         await transporter.sendMail(mailOptions);
@@ -228,16 +217,6 @@ app.post("/send-email", upload.single("file"), async (req, res) => {
         console.error("⚠️ Error sending email:", error);
         res.status(500).json({ message: "Internal Server Error", error: error.message });
     }
-});
-
-// ✅ Root Endpoint to Test Server
-app.get("/", (req, res) => {
-    res.send({ message: "🚀 Backend is running on Render!" });
-});
-
-// ✅ Check Server Health
-app.get("/health", (req, res) => {
-    res.json({ status: "Running", uptime: process.uptime() });
 });
 
 // Start server
