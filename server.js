@@ -96,6 +96,10 @@ app.use("/uploads", express.static(IMAGE_UPLOAD_DIR));
 // Function to read jobs from JSON file
 const readJobs = () => {
     try {
+        if (!fs.existsSync(JOBS_FILE)) {
+            console.log("⚠️ Jobs.json not found, creating a new one.");
+            fs.writeFileSync(JOBS_FILE, "[]", "utf8"); // ✅ Creates empty file if missing
+        }
         const data = fs.readFileSync(JOBS_FILE, "utf8");
         return JSON.parse(data);
     } catch (err) {
