@@ -79,13 +79,13 @@ const __dirname = path.dirname(__filename);
 
 // Define directories
 const JOBS_FILE = path.join(__dirname, "../src/JsonFiles/Jobs.json");
-const IMAGE_UPLOAD_DIR = path.join(__dirname, "../src/Uploads");
+const IMAGE_UPLOAD_DIR = path.join(__dirname, "Uploads");
 
 // Ensure upload directory exists
 if (!fs.existsSync(IMAGE_UPLOAD_DIR)) {
     fs.mkdirSync(IMAGE_UPLOAD_DIR, { recursive: true });
+    console.log("✅ Uploads directory created!");
 }
-
 // Serve static files from the uploads directory
 app.use("/uploads", express.static(IMAGE_UPLOAD_DIR));
 
