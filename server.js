@@ -70,7 +70,7 @@ import express from 'express'
 dotenv.config({ path: "./.env" });
 
 const app = express();
-app.use(cors({ origin: "*" })); // Allows API requests from any device
+app.use(cors({ origin: "*" }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -87,7 +87,7 @@ if (!fs.existsSync(IMAGE_UPLOAD_DIR)) {
 }
 
 // Serve static files from the uploads directory
-app.use("/uploads", express.static(IMAGE_UPLOAD_DIR));
+app.use("/uploads", express.static(path.join(__dirname, 'JsonFiles')));
 
 // Function to read jobs from JSON file
 const readJobs = () => {
