@@ -87,7 +87,8 @@ if (!fs.existsSync(IMAGE_UPLOAD_DIR)) {
 }
 
 // Serve static files from the uploads directory
-app.use("/uploads", express.static(path.join(__dirname, 'JsonFiles')));
+app.use("/uploads", express.static(IMAGE_UPLOAD_DIR));
+
 
 // Function to read jobs from JSON file
 const readJobs = () => {
@@ -146,7 +147,8 @@ app.post("/jobs", upload.single("image"), (req, res) => {
         experience: req.body.experience,
         location: req.body.location,
         description: req.body.description, // ✅ Added Job Description field
-        image: req.file ? `http://localhost:5000/uploads/${req.file.filename}` : null,
+        image: req.file ? `https://server-2-o6o3.onrender.com/uploads/${req.file.filename}` : null
+
     };
 
     jobs.push(newJob);
