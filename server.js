@@ -95,15 +95,17 @@ const readJobs = () => {
     try {
         if (!fs.existsSync(JOBS_FILE)) {
             console.log("⚠️ Jobs.json not found, creating a new one.");
-            fs.writeFileSync(JOBS_FILE, "[]", "utf8");
+            fs.writeFileSync(JOBS_FILE, "[]", "utf8"); // ✅ Ensure file starts with valid JSON
         }
+
         const data = fs.readFileSync(JOBS_FILE, "utf8");
-        return JSON.parse(data);
+        return data.trim() ? JSON.parse(data) : []; // ✅ Prevent SyntaxError on empty file
     } catch (err) {
         console.error("⚠️ Error reading job file:", err);
         return [];
     }
 };
+
 
 // Function to write jobs to JSON file
 const writeJobs = (jobs) => {
