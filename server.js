@@ -56,12 +56,7 @@
 
 // app.listen(5000, () => console.log("Server running on port 5000"));
 // console.log("BUSINESS_EMAIL:", process.env.BUSINESS_EMAIL);
-// console.log("PERSONAL_EMAIL:", process.env.PERSONAL_EMAIL);
-
-////////////////
-///////////////
-///////////////////
-import express from "express";
+// console.log("PERSONAL_EMAIL:", process.env.PERSONAL_EMAIL);import express from "express";
 import cors from "cors";
 import fs from "fs";
 import dotenv from "dotenv";
@@ -70,6 +65,7 @@ import { fileURLToPath } from "url";
 import nodemailer from "nodemailer";
 import process from "process";
 import path from "path";
+import express from 'express'
 
 dotenv.config({ path: "./.env" });
 
@@ -98,7 +94,7 @@ const readJobs = () => {
     try {
         if (!fs.existsSync(JOBS_FILE)) {
             console.log("⚠️ Jobs.json not found, creating a new one.");
-            fs.writeFileSync(JOBS_FILE, "[]", "utf8"); // ✅ Creates empty file if missing
+            fs.writeFileSync(JOBS_FILE, "[]", "utf8");
         }
         const data = fs.readFileSync(JOBS_FILE, "utf8");
         return JSON.parse(data);
@@ -134,7 +130,7 @@ app.get("/jobs", (req, res) => {
     res.json(readJobs());
 });
 
-// Add a new job with manual Job ID entry
+// Add a new job with manual Job ID and description
 app.post("/jobs", upload.single("image"), (req, res) => {
     const jobs = readJobs();
     if (!req.body.id || !req.body.name || !req.body.experience || !req.body.location || !req.body.description) {
@@ -197,6 +193,10 @@ app.post("/send-email", upload.single("file"), async (req, res) => {
         const { name, email, phone, message, recipientEmail } = req.body;
         const file = req.file;
 
+        if (!recipientEmail) {
+            return res.status(400).json({ message: "⚠️ Recipient email missing." });
+        }
+
         const transporter = nodemailer.createTransport({
             service: "gmail",
             auth: {
@@ -217,6 +217,7 @@ app.post("/send-email", upload.single("file"), async (req, res) => {
 
         await transporter.sendMail(mailOptions);
         res.status(200).json({ message: "✅ Email sent successfully!" });
+
     } catch (error) {
         console.error("⚠️ Error sending email:", error);
         res.status(500).json({ message: "Internal Server Error", error: error.message });
