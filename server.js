@@ -70,7 +70,7 @@ import express from 'express'
 dotenv.config({ path: "./.env" });
 
 const app = express();
-app.use(cors());
+app.use(cors({ origin: "*" })); // Allows API requests from any device
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -108,10 +108,13 @@ const readJobs = () => {
 const writeJobs = (jobs) => {
     try {
         fs.writeFileSync(JOBS_FILE, JSON.stringify(jobs, null, 2), "utf8");
+        console.log("✅ Jobs saved successfully!");
     } catch (err) {
         console.error("⚠️ Error writing job file:", err);
     }
 };
+
+
 
 // Multer file storage configuration
 const storage = multer.diskStorage({
